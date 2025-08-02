@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OOPS Airlines – A Flight to Nowhere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Bungee&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('cockpit.jpeg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .dialog-box {
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 4px solid #FFD700;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .dialog-box.hidden {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .dialog-message {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            line-height: 1.4;
+            min-height: 80px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: linear-gradient(135deg, #FF7F50, #FF6347);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .option-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .option-btn:active {
+            transform: translateY(1px);
+        }
+
+        .stage-indicator {
+            position: absolute;
+            top: -15px;
+            right: 20px;
+            background-color: #FF6347;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        }
+
+        .final-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Chewy', cursive;
+            font-size: 3rem;
+            color: #FFD700;
+            text-align: center;
+            text-shadow: 
+                3px 3px 0 #FF8C00,
+                -3px -3px 0 #FF8C00,
+                3px -3px 0 #FF8C00,
+                -3px 3px 0 #FF8C00,
+                0 4px 8px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+            width: 90%;
+            line-height: 1.2;
+            padding: 20px;
+        }
+
+        .final-message.show {
+            opacity: 1;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes turbulence {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(2px, -3px); }
+            50% { transform: translate(-3px, 1px); }
+            75% { transform: translate(4px, 2px); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes takeoff {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0); }
+        }
+
+        @keyframes landing {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+            100% { transform: translateY(0); }
+        }
+
+        .shake {
+            animation: shake 0.5s infinite;
+        }
+
+        .turbulence {
+            animation: turbulence 0.5s infinite;
+        }
+
+        .bounce {
+            animation: bounce 0.5s;
+        }
+
+        .takeoff-anim {
+            animation: takeoff 1s;
+        }
+
+        .landing-anim {
+            animation: landing 1s;
+        }
+
+        .stage-change {
+            animation: bounce 0.8s;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .dialog-message {
+                font-size: 1.3rem;
+                min-height: 70px;
+            }
+            
+            .option-btn {
+                padding: 12px;
+                font-size: 1rem;
+            }
+            
+            .final-message {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dialog-message {
+                font-size: 1.1rem;
+                margin-bottom: 20px;
+                min-height: 60px;
+            }
+            
+            .option-btn {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+            
+            .final-message {
+                font-size: 2rem;
+            }
+            
+            .stage-indicator {
+                font-size: 0.8rem;
+                padding: 4px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+    
+    <div class="container">
+        <div class="dialog-box" id="dialogBox">
+            <div class="stage-indicator" id="stageIndicator">TAKE-OFF</div>
+            <div class="dialog-message" id="dialogMessage">Captain, are you ready for departure?</div>
+            <div class="options" id="options">
+                <button class="option-btn" onclick="selectOption(0)">Yes, let's fly!</button>
+                <button class="option-btn" onclick="selectOption(1)">I left the stove on…</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="final-message" id="finalMessage">Oops, You've reached...........absolutely NOWHERE.</div>
+
+    <script>
+        const messages = [
+            // Take-Off
+            {
+                message: "Captain, are you ready for departure?",
+                options: ["Yes, let's fly!", "I left the stove on…"],
+                stage: "TAKE-OFF",
+                animation: ""
+            },
+            {
+                message: "The passengers are staring at you. Shall we impress them with a smooth takeoff?",
+                options: ["Let's impress!", "I need a minute…"],
+                stage: "TAKE-OFF",
+                animation: "takeoff-anim"
+            },
+            
+            // Mid-Flight
+            {
+                message: "Storm ahead! Should we fly through it or turn back?",
+                options: ["Through the storm!", "Turn back, I forgot snacks."],
+                stage: "MID-FLIGHT",
+                animation: "turbulence"
+            },
+            {
+                message: "A pigeon just flew into Engine 2. Suggestions?",
+                options: ["Apologize to the pigeon.", "Hit the engine gently."],
+                stage: "MID-FLIGHT",
+                animation: "shake"
+            },
+            {
+                message: "You're now flying upside down. Intentional?",
+                options: ["Totally planned.", "Wait, what?!"],
+                stage: "MID-FLIGHT",
+                animation: "shake"
+            },
+            {
+                message: "Autopilot just joined a meditation class. What do we do?",
+                options: ["Join him.", "Manual it is!"],
+                stage: "MID-FLIGHT",
+                animation: "turbulence"
+            },
+            {
+                message: "Engine 3 is dancing. Shall we join?",
+                options: ["Yes, let's vibe!", "Let it groove alone."],
+                stage: "MID-FLIGHT",
+                animation: "shake"
+            },
+            
+            // Landing
+            {
+                message: "You have been awarded 'Worst Pilot of the Year'. Accept?",
+                options: ["With pride.", "I want a recount"],
+                stage: "LANDING",
+                animation: "landing-anim"
+            },
+            {
+                message: "The passengers have rated your flying experience: 1 out of 5. Comment?",
+                options: ["Still better than real airlines.", "Was aiming for 0."],
+                stage: "LANDING",
+                animation: "landing-anim"
+            },
+            {
+                message: "Congratulations, Captain. You've successfully landed in the middle of an ocean. No airports nearby.",
+                options: ["Vacation mode on.", "Call rescue."],
+                stage: "LANDING",
+                animation: "landing-anim"
+            },
+            {
+                message: "Flight complete. Where did we go? Wanna know?",
+                options: ["Yes", "No"],
+                stage: "LANDING",
+                animation: ""
+            }
+        ];
+
+        let currentMessageIndex = 0;
+        let currentStage = "TAKE-OFF";
+        const dialogBox = document.getElementById('dialogBox');
+        const dialogMessage = document.getElementById('dialogMessage');
+        const optionsContainer = document.getElementById('options');
+        const finalMessage = document.getElementById('finalMessage');
+        const stageIndicator = document.getElementById('stageIndicator');
+
+        function updateDialog() {
+            dialogBox.classList.add('hidden');
+            
+            setTimeout(() => {
+                const currentMessage = messages[currentMessageIndex];
+                dialogMessage.textContent = currentMessage.message;
+                
+                // Check if stage changed
+                if (currentStage !== currentMessage.stage) {
+                    stageIndicator.classList.add('stage-change');
+                    currentStage = currentMessage.stage;
+                    
+                    setTimeout(() => {
+                        stageIndicator.textContent = currentStage;
+                        stageIndicator.classList.remove('stage-change');
+                    }, 800);
+                } else {
+                    stageIndicator.textContent = currentStage;
+                }
+                
+                optionsContainer.innerHTML = '';
+                
+                currentMessage.options.forEach((option, index) => {
+                    const button = document.createElement('button');
+                    button.className = 'option-btn';
+                    button.textContent = option;
+                    button.onclick = () => selectOption(index);
+                    optionsContainer.appendChild(button);
+                });
+                
+                // Remove all animation classes first
+                dialogBox.classList.remove('shake', 'turbulence', 'takeoff-anim', 'landing-anim');
+                
+                // Add new animation if specified
+                if (currentMessage.animation) {
+                    dialogBox.classList.add(currentMessage.animation);
+                    
+                    // For non-infinite animations, remove them after completion
+                    if (currentMessage.animation === 'takeoff-anim' || 
+                        currentMessage.animation === 'landing-anim') {
+                        setTimeout(() => {
+                            dialogBox.classList.remove(currentMessage.animation);
+                        }, 1000);
+                    }
+                }
+                
+                dialogBox.classList.remove('hidden');
+                
+            }, 400);
+        }
+
+        function selectOption(optionIndex) {
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons[optionIndex].classList.add('bounce');
+            
+            setTimeout(() => {
+                buttons[optionIndex].classList.remove('bounce');
+                currentMessageIndex++;
+                
+                if (currentMessageIndex < messages.length) {
+                    updateDialog();
+                } else {
+                    // Stop all animations before final message
+                    dialogBox.classList.remove('shake', 'turbulence', 'takeoff-anim', 'landing-anim');
+                    dialogBox.classList.add('hidden');
+                    setTimeout(() => {
+                        finalMessage.classList.add('show');
+                    }, 500);
+                }
+            }, 300);
+        }
+
+        // Initialize
+        updateDialog();
+    </script>
+</body>
+</html>
